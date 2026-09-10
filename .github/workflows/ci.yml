@@ -24,9 +24,10 @@ jobs:
       - run: python gate2_local_dither.py --out results --seeds 6
       - run: python gate3_multiport_dither.py --out results --seeds 6
       - run: python gate4_routing_basin.py --out results --seeds 6
+      - run: python gate5_multisource_basin.py --out results --seeds 4
       - uses: actions/upload-artifact@v4
         with:
-          name: gate0-4-results-py${{ matrix.python-version }}
+          name: gate0-5-results-py${{ matrix.python-version }}
           path: |
             results/gate0.json
             results/gate0_topology.svg
@@ -36,3 +37,5 @@ jobs:
             results/gate3_multiport_dither.json
             results/gate3_multiport_topology.svg
             results/gate4_routing_basin.json
+            results/gate5_multisource_basin.json
+            results/gate5_multisource_topology.svg
