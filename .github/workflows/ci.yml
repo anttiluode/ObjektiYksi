@@ -27,6 +27,7 @@ jobs:
       - run: python gate5_multisource_basin.py --out results --seeds 4
       - run: python gate5_long_confirm.py --out results --seeds 3 --attempts 1600
       - run: python gate6_learned_addressing.py --out results --seeds 3 --epochs 20 --slow-proposals 24
+      - run: python gate6_moving_target.py --out results --seeds 3 --epochs 45 --slow-proposals 36
       - uses: actions/upload-artifact@v4
         with:
           name: gate0-6-results-py${{ matrix.python-version }}
@@ -44,3 +45,5 @@ jobs:
             results/gate5_long_confirm.json
             results/gate6_learned_addressing.json
             results/gate6_learned_addressing_topology.svg
+            results/gate6_moving_target.json
+            results/gate6_moving_target_topology.svg
