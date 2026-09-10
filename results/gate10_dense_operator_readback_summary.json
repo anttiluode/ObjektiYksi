@@ -1,0 +1,32 @@
+{
+  "gate": 10,
+  "verdict": "physically_reachable_operator_readback_succeeds_but_arbitrary_matrix_claim_fails",
+  "focused_ci_receipt_sha256": "f160165483b7816d3a71b546adc88671d9de6e70fff12a3c556ed6c818db169f",
+  "reachable_teacher": {
+    "median_blank_matrix_error": 0.5525879494461502,
+    "median_recovered_matrix_error": 0.01768550342495773,
+    "max_recovered_matrix_error": 0.02714213245854869,
+    "median_blank_heldout_error": 0.5436293092560802,
+    "median_heldout_error": 0.015591876534283382,
+    "median_random_accept_matrix_error": 0.5976674147205515,
+    "median_no_write_matrix_error": 0.5525879494461502,
+    "max_material_sum_relative_error": 0.0
+  },
+  "external_random": {
+    "median_blank_matrix_error": 1.4562342590656516,
+    "median_recovered_matrix_error": 0.7310298863731873,
+    "max_recovered_matrix_error": 0.7915200888002321,
+    "median_heldout_error": 0.7079899582169251,
+    "median_random_accept_matrix_error": 1.3786502179998819
+  },
+  "training": {
+    "matrix_shape": [3, 3],
+    "omega": 1.35,
+    "dense_random_training_probes": 3,
+    "basis_vectors_used_during_training": false,
+    "attempts_per_run": 1600,
+    "student_seeds": [0, 1, 2],
+    "teacher_material_local_transfers": 1000
+  },
+  "claim_boundary": "The positive result establishes storage/system identification of a dense operator inside the lattice's realizable operator family. The unrelated arbitrary dense target fails the same recovery criterion."
+}
