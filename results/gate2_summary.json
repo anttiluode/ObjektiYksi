@@ -1,0 +1,35 @@
+{
+  "gate": 2,
+  "ci_run": 34465463058,
+  "seeds": 6,
+  "attempts_per_seed": 420,
+  "delta": 0.055,
+  "floor_fraction": 0.01,
+  "true_consequence": {
+    "median_desired_over_decoy": 41.17458790291383,
+    "min_desired_over_decoy": 18.19658100410699,
+    "max_desired_over_decoy": 77.36766356662424,
+    "median_target_power_vs_baseline": 2.2090861476172874,
+    "median_utility_gain": 3.533215191565155,
+    "median_target_rank": 1.0,
+    "median_acceptance_fraction": 0.5083333333333333,
+    "max_material_sum_relative_error": 2.583791766400364e-16,
+    "target_over_strongest_other_range": [1.0391568163317808, 1.4041429779773773]
+  },
+  "random_accept": {
+    "median_desired_over_decoy": 1.1881873584499323,
+    "median_target_power_vs_baseline": 0.9635174606286588,
+    "median_target_rank": 4.0
+  },
+  "inverted_consequence": {
+    "median_desired_over_decoy": 0.021359156837841654,
+    "median_target_power_vs_baseline": 0.04242818110818178,
+    "median_target_rank": 9.0
+  },
+  "no_write": {
+    "median_desired_over_decoy": 0.9999999999999979,
+    "median_target_power_vs_baseline": 0.9999999999999998,
+    "median_target_rank": 6.0
+  },
+  "guardrail": "The 41x target/decoy result is two-port discrimination, not 41x general multiport selectivity. Gate 3 attacks the strongest competing port."
+}

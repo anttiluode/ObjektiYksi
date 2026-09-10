@@ -6,23 +6,29 @@ This repo tests one concrete version of the idea that emerged from `ResonantNeur
 
 > **A fast signal can define a temporary functional topology; a slower material rule can harden part of that topology; the changed topology then changes the next signal.**
 
-The first experiment is deliberately small and attackable. It is not a claim that cortex is an acoustic cavity, that dendrites literally contain water-wave dams, or that a returned signal automatically solves biological credit assignment.
+The experiments are deliberately small and attackable. This is not a claim that cortex is an acoustic cavity, that dendrites literally contain water-wave dams, or that a returned signal automatically solves biological credit assignment.
 
 ## What happened
 
-GitHub Actions reproduced Gates 0–1 on Python 3.11 and 3.12. Starting from an exactly mirror-symmetric material (`desired/decoy = 1`), the signed forward × receiver-reference rule redistributes a **fixed mean coupling budget**. After fast state is erased, the identical source-only query gives:
+GitHub Actions reproduced Gates 0–2 on Python 3.11 and 3.12.
+
+Gate 0 starts from exactly mirror-symmetric material and uses a signed forward × receiver-reference sensitivity as a positive-control write rule. With mean coupling fixed, the source-only replay reaches `1366.48x` desired/mirror-decoy and raises absolute desired power `980.94x`.
+
+Gate 1 then shows that this is not adequately described as a static conductive road: after carving, ordinary `1/g` shortest-path cost actually favors the decoy while the wave operator strongly favors the desired receiver. The learned object is frequency-dependent resonant topology.
+
+Gate 2 removes the handed analytic sign entirely. It picks two edges sharing one lattice node, transfers a small amount of coupling locally between them, re-solves the fast field from the source alone, receives one bounded scalar consequence, and either keeps or reverts the perturbation. Across six fixed proposal streams:
 
 ```text
-desired power / baseline       980.94x
-desired / mirror decoy        1366.48x
-target / strongest other port   14.84x
+rule                    median target/decoy   median target gain   median rank
+true consequence              41.1746x              2.2091x          1 / 9
+random accept                   1.1882x              0.9635x          4 / 9
+inverted consequence            0.02136x             0.04243x         9 / 9
+no write                        1.0000x              1.0000x          6 / 9
 ```
 
-Mirroring only the learned material swaps the preference exactly (`ratio × mirrored ratio = 1.000000000000011`). Yet a static `1/g` shortest-path calculation actually finds the decoy path cheaper than the desired path. So the learned object is **not a simple conductive road**; its function lives in the frequency-dependent wave operator.
+Every true-consequence seed put the target first. Total structural material is conserved to `2.58e-16` relative error. The strongest caveat is equally important: target / strongest-other is only about `1.04x–1.40x`, because Gate 2's scalar consequence explicitly names one mirror decoy. Gate 3 therefore attacks **multiport** selectivity instead of celebrating the `41x` two-port number.
 
-The controls also catch the silence trap. Magnitude-only reference reaches `74.41x` target/decoy while making the target itself slightly weaker; forward-only nearly silences both ports and remains symmetric. The signed phase-sensitive rule is the one that simultaneously increases absolute target transfer and specificity.
-
-See [`GATE0_1_RESULTS.md`](GATE0_1_RESULTS.md) and the compact frozen [`results/gate0_1_summary.json`](results/gate0_1_summary.json).
+See [`GATE0_1_RESULTS.md`](GATE0_1_RESULTS.md), [`GATE2_RESULTS.md`](GATE2_RESULTS.md), and the compact receipts in [`results/`](results/).
 
 ## Gate 0 — a wave field carves channels and dams
 
@@ -55,80 +61,84 @@ For edge incidence vector `b_e`, changing one edge coupling gives the exact firs
 \qquad y=\langle t|u\rangle.
 ```
 
-That expression is useful here because it can be read as a **forward field meeting a receiver-launched reference field**. Gate 0 uses it as a positive-control write rule. It is not presented as an emergent biological learning rule.
+Gate 0 uses that expression as a positive-control write rule. It is not presented as an emergent biological learning rule.
 
-The slow material update acts in log-coupling space and keeps the mean coupling fixed:
-
-```math
-\log g_e \leftarrow \log g_e + \eta\,\widehat q_e,
-\qquad
-\langle g\rangle=1.
-```
-
-So the system cannot win by simply making every edge more conductive. Positive parts of the interference sensitivity become **channels**; negative parts become **dams**. Then the field is solved again through the changed material.
-
-The loop is therefore
+The slow material update acts in log-coupling space and keeps the mean coupling fixed, so the system cannot win by simply making every edge more conductive. Positive parts of the sensitivity become operational **channels**; negative parts become **dams**. Then the field is solved again through the changed material.
 
 ```text
 fixed material
     ↓
 source + receiver-reference fields
     ↓
-temporary functional edge pattern q_e
+temporary functional edge pattern
     ↓
 slow redistribution of edge permeability
     ↓
 new K(g), therefore new H_g
     ↓
-state erased
+fast state erased
     ↓
-source-only query traverses a changed topology
+source-only query traverses changed topology
 ```
 
 This is the missing reverse arrow from the older resonator work:
 
 ```text
 ResonantNeuron:       TOPOLOGY -> SIGNAL
-ObjektiYksi Gate 0:   TOPOLOGY <-> SIGNAL
+ObjektiYksi:          TOPOLOGY <-> SIGNAL
 ```
+
+## Gate 1 — road or resonant topology?
+
+`gate1_route_or_resonance.py` mirrors the learned material, sweeps frequency, ranks all right-side ports, and compares wave transfer with ordinary `1/g` shortest paths.
+
+Mirroring only the persistent material swaps the preference essentially exactly. Yet the cheapest static path goes to the decoy. So what was carved is not just a wire-like road; the function is in the material arrangement as seen through the resonant operator.
+
+## Gate 2 — the medium pokes itself
+
+`gate2_local_dither.py` removes both the receiver-launched reference field and the analytic per-edge derivative from the learning rule.
+
+A proposal is strictly local: two couplings that meet at one node exchange a fixed amount of material,
+
+```text
+g_a <- g_a + delta
+g_b <- g_b - delta
+```
+
+so `sum(g)` is exactly conserved. After the perturbation, the source-only field is recomputed and the observer emits one scalar:
+
+```math
+U = \log(P_{target}+\sigma^2)-\log(P_{decoy}+\sigma^2).
+```
+
+The observer floor prevents the silence trick: if both outputs vanish, utility tends back toward zero. `true_consequence` keeps the local structural experiment only when this scalar improves.
+
+This is the decomposition we wanted to test:
+
+```text
+WHERE / WHICH WAY:  random local physical dither
+WHETHER TO KEEP:    delayed bounded consequence
+MEMORY:             persistent changed material
+NEXT COMPUTATION:   same source sees a new H_g
+```
+
+It works in the two-port task without ever calculating `dU/dg`.
 
 ## Why a symmetric task
 
-The source sits on the left. Two readout ports are mirror-symmetric on the right. Before carving, symmetry forces equal transfer to the desired port and the decoy. The desired port is used only as the reference during writing. After writing, **all fast state is discarded** and the source is queried alone.
+The source sits on the left. Two readout ports are mirror-symmetric on the right. Before carving, symmetry forces equal transfer to the desired port and the mirror decoy. After writing, all fast state is discarded and the source is queried alone.
 
-The strongest observable is therefore not raw amplitude but whether the persistent material now breaks the original symmetry:
+The Gate-0/2 two-port observable is
 
 ```math
 R = \frac{|u_{\rm desired}|^2}{|u_{\rm decoy}|^2}.
 ```
 
-At baseline `R ≈ 1`. A successful persistent write should make `R > 1` without changing the source or readout geometry.
-
-## Controls
-
-`self_carving.py` runs the same fixed material budget under five rules:
-
-- `phase_reference` — signed forward × reciprocal-reference sensitivity above;
-- `magnitude_reference` — keeps overlap magnitude but throws away phase/sign;
-- `forward_only` — uses only local forward field energy;
-- `scrambled_reference` — spatially permutes the signed reference pattern;
-- `no_write` — frozen material.
-
-The point is not that the positive control must be biologically plausible. The point is to ask a prior question first:
-
-> **Can a distributed wave interaction define a spatial pattern which, when slowly hardened under a fixed material budget, becomes a persistent topology that changes later routing?**
-
-If that fails, there is no reason to argue about biological implementations.
-
-## Gate 1 — road or resonant topology?
-
-`gate1_route_or_resonance.py` attacks the obvious interpretation that the material merely carved a high-conductance road. It mirrors the learned material, sweeps frequency, ranks all right-side ports, and compares the wave result with ordinary `1/g` shortest paths.
-
-The mirror test says the persistent material really contains the receiver preference. The shortest-path test says **ordinary graph distance does not explain it**. The frequency sweep says the result is a transfer property of the resonant operator.
+Gate 3 will deliberately stop relying on a single named decoy.
 
 ## What counts as a dam
 
-A nodal line is not automatically a wall. This repo therefore uses `dam` operationally: an edge whose persistent coupling has been driven substantially below the material mean. Likewise a `channel` is an edge driven above the mean. The code measures both rather than calling every low-amplitude wave line a topological barrier.
+A nodal line is not automatically a wall. This repo therefore uses `dam` operationally: an edge whose persistent coupling has been driven substantially below the material mean. Likewise a `channel` is an edge driven above the mean. The code measures persistent coupling changes rather than calling every low-amplitude wave line a topological barrier.
 
 ## Run
 
@@ -137,24 +147,15 @@ python -m pip install -r requirements.txt
 pytest -q
 python self_carving.py --out results
 python gate1_route_or_resonance.py --out results
+python gate2_local_dither.py --out results --seeds 6
 ```
-
-The experiments write:
-
-```text
-results/gate0.json
-results/gate0_topology.svg
-results/gate1_route_or_resonance.json
-```
-
-The SVG is generated directly by the experiment, with no plotting dependency.
 
 ## Claim boundary
 
-Gates 0–1 establish only this computational-physics statement in the toy:
+Gates 0–2 establish only this computational-physics statement in the toy:
 
-> **A reciprocal wave interaction can define a spatial write field which is converted into a slow, resource-constrained material deformation; after fast state is erased, that persistent deformation changes a later receiver-selective wave transfer, and the result is not reducible to a static shortest conductive path.**
+> **A reciprocal resonant medium can be persistently restructured by signal-related interaction; moreover, the useful write direction need not be supplied analytically—local conservative physical dithers can be retained or rejected using only a bounded scalar consequence, so that later source-only transfer changes after all fast state is erased.**
 
-They do **not** establish that real dendrites implement this rule, that wave nodes literally become anatomical walls, that the reference signal is a biological adjoint, or that the rule solves free structural credit assignment.
+They do **not** establish autonomous goals, biological credit assignment, dendritic growth, literal fluid dams, or a long-delay eligibility mechanism.
 
-The next gate removes the analytically signed positive-control rule and asks whether a strictly local stateful medium can discover an equivalent carving direction by physical dither + delayed consequence.
+The next gate replaces the named mirror decoy with the strongest competing output port. If the same local-dither mechanism can make one chosen receiver robustly dominate an entire output strip, the self-carving result becomes multiport routing rather than two-port discrimination.
