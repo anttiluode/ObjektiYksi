@@ -1,0 +1,41 @@
+{
+  "gate": 9,
+  "question": "Does Gate-8 crossed learning move the audit-best physical source address for each target?",
+  "preregistered_success": {
+    "blank_assigned_exact_fraction": 0.0,
+    "blank_native_exact_fraction": 1.0,
+    "median_crossed_final_assigned_exact_fraction": 1.0,
+    "every_crossed_seed_assigned_exact_fraction_at_least": 0.6666666666666666,
+    "median_min_assigned_minus_old_native_utility_at_least": 0.05,
+    "crossed_assigned_fraction_exceeds_random_and_no_write_by_at_least": 0.3333333333333333
+  },
+  "crossed": {
+    "median_blank_assigned_exact_fraction": 0.0,
+    "median_blank_native_exact_fraction": 1.0,
+    "median_final_assigned_exact_fraction": 1.0,
+    "min_final_assigned_exact_fraction": 1.0,
+    "median_final_native_exact_fraction": 0.0,
+    "median_min_assigned_minus_native_utility": 1.0048688528507643,
+    "min_over_seeds_assigned_minus_native_utility": 0.6232184441413802,
+    "median_min_assigned_minus_runner_up_utility": 1.0048688528507643,
+    "median_gate8_final_min_ratio": 1.5224952683924415,
+    "max_material_sum_relative_error": 2.583791766400364e-16
+  },
+  "controls": {
+    "identity_final_assigned_exact_fraction": 0.0,
+    "identity_final_native_exact_fraction": 1.0,
+    "random_final_assigned_exact_fraction": 0.0,
+    "random_final_native_exact_fraction": 1.0,
+    "no_write_final_assigned_exact_fraction": 0.0,
+    "no_write_final_native_exact_fraction": 1.0
+  },
+  "per_seed_crossed_assigned_minus_native": {
+    "0": [1.0048688528507643, 1.1156774988108396, 1.0337495262878225],
+    "1": [1.6120856996555313, 1.1120746662508543, 1.3408353834333209],
+    "2": [1.26565725991742, 0.7104179660467569, 0.6232184441413802]
+  },
+  "blank_is_native": true,
+  "crossed_moves": true,
+  "verdict": "address_optima_move_with_learned_material",
+  "claim_boundary": "This shows programmable movement of the best source coordinate for three target relations in the engineered lattice. It does not establish autonomous address discovery, arbitrary coordinate warping, biological dendritic remapping, or local biological credit assignment."
+}
