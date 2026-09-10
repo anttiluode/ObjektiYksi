@@ -20,9 +20,11 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: pytest -q
       - run: python self_carving.py --out results
+      - run: python gate1_route_or_resonance.py --out results
       - uses: actions/upload-artifact@v4
         with:
-          name: gate0-results-py${{ matrix.python-version }}
+          name: gate0-1-results-py${{ matrix.python-version }}
           path: |
             results/gate0.json
             results/gate0_topology.svg
+            results/gate1_route_or_resonance.json
