@@ -21,13 +21,11 @@ from gate6_learned_addressing import (
 from self_carving import make_grid, write_svg
 
 
-def address_spaces() -> dict[str, list[Address]]:
-    """Pre-registered Gate-7 ablations.
+MATCH_FRACTION = 0.90
 
-    FULL is the Gate-6 address space.
-    POSITION_ONLY keeps the one frequency actually used by the Gate-6 oracle.
-    FREQUENCY_ONLY removes source-position addressing.
-    """
+
+def address_spaces() -> dict[str, list[Address]]:
+    """Pre-registered Gate-7 ablations."""
     return {
         "full": addresses(),
         "position_only": [Address(source_dr=dr, omega=1.35) for dr in (-1, 0, 1)],
@@ -36,12 +34,7 @@ def address_spaces() -> dict[str, list[Address]]:
 
 
 def common_sigma2(grid, tasks: list[int], floor_fraction: float) -> float:
-    """Use one observer floor for every ablation.
-
-    The floor is defined from the original full Gate-6 address space on blank
-    material, so removing an address dimension cannot silently change the
-    bounded objective itself.
-    """
+    """Use the full blank-space observer floor for every ablation."""
     return baseline_floor(grid, tasks, address_spaces()["full"], floor_fraction)
 
 
@@ -79,7 +72,6 @@ def run_space(
     total0 = float(np.sum(g))
     sigma2 = common_sigma2(grid, tasks, floor_fraction)
 
-    # Audit-only baseline. These exact utilities never initialize the selector.
     baseline_matrix = exact_matrix(grid, g, tasks, addr, sigma2)
     baseline_oracle = oracle_choices(baseline_matrix)
     baseline_eval = family_measure(grid, g, tasks, addr, baseline_oracle, sigma2)
@@ -116,9 +108,7 @@ def run_space(
         if counts[q, ai] == 0:
             values[q, ai] = float(m["utility"])
         else:
-            values[q, ai] = (
-                (1.0 - ema) * values[q, ai] + ema * float(m["utility"])
-            )
+            values[q, ai] = (1.0 - ema) * values[q, ai] + ema * float(m["utility"])
         counts[q, ai] += 1
 
     for epoch in range(epochs):
@@ -223,6 +213,36 @@ def summarize(runs):
     }
 
 
+def classify(summary: dict[str, dict]) -> dict[str, object]:
+    full = summary["full"]
+    position = summary["position_only"]
+    frequency = summary["frequency_only"]
+    p_ratio = float(position["median_final_selected_min_ratio"] / max(full["median_final_selected_min_ratio"], 1e-30))
+    f_ratio = float(frequency["median_final_selected_min_ratio"] / max(full["median_final_selected_min_ratio"], 1e-30))
+    p_rank = bool(position["median_final_selected_rank1_fraction"] >= full["median_final_selected_rank1_fraction"] - 1e-12)
+    f_rank = bool(frequency["median_final_selected_rank1_fraction"] >= full["median_final_selected_rank1_fraction"] - 1e-12)
+    p_match = bool(p_rank and p_ratio >= MATCH_FRACTION)
+    f_match = bool(f_rank and f_ratio >= MATCH_FRACTION)
+    if p_match and f_match:
+        verdict = "redundant_coordinates_joint_not_needed"
+    elif p_match:
+        verdict = "position_dominated_joint_not_needed"
+    elif f_match:
+        verdict = "frequency_dominated_joint_not_needed"
+    else:
+        verdict = "joint_space_earns_ablation_advantage"
+    return {
+        "match_fraction_preregistered": MATCH_FRACTION,
+        "position_over_full_final_min_ratio": p_ratio,
+        "frequency_over_full_final_min_ratio": f_ratio,
+        "position_matches_full_rank1": p_rank,
+        "frequency_matches_full_rank1": f_rank,
+        "position_matches_full": p_match,
+        "frequency_matches_full": f_match,
+        "verdict": verdict,
+    }
+
+
 def run_all(out_dir: Path, seeds: int = 3, epochs: int = 30, slow_proposals: int = 24):
     out_dir.mkdir(parents=True, exist_ok=True)
     spaces = list(address_spaces())
@@ -234,16 +254,7 @@ def run_all(out_dir: Path, seeds: int = 3, epochs: int = 30, slow_proposals: int
         for name in spaces
     }
     summary = {name: summarize(rs) for name, rs in runs.items()}
-
-    full = summary["full"]
-    position = summary["position_only"]
-    frequency = summary["frequency_only"]
-    interpretation = {
-        "position_over_full_final_min_ratio": float(position["median_final_selected_min_ratio"] / max(full["median_final_selected_min_ratio"], 1e-30)),
-        "frequency_over_full_final_min_ratio": float(frequency["median_final_selected_min_ratio"] / max(full["median_final_selected_min_ratio"], 1e-30)),
-        "position_matches_full_rank1": bool(position["median_final_selected_rank1_fraction"] >= full["median_final_selected_rank1_fraction"] - 1e-12),
-        "frequency_matches_full_rank1": bool(frequency["median_final_selected_rank1_fraction"] >= full["median_final_selected_rank1_fraction"] - 1e-12),
-    }
+    interpretation = classify(summary)
 
     best = max(
         runs["position_only"],
@@ -253,18 +264,24 @@ def run_all(out_dir: Path, seeds: int = 3, epochs: int = 30, slow_proposals: int
 
     receipt = {
         "gate": 7,
-        "question": "Did Gate 6 actually need joint source-position and frequency addressing, or was task identity already carried by source position alone?",
+        "question": "Did Gate 6 actually need joint source-position and frequency addressing, or can one address dimension explain the result?",
         "preregistered_spaces": {
             "full": "3 source rows x 3 frequencies",
             "position_only": "3 source rows at fixed omega=1.35, the frequency selected by every Gate-6 blank/final oracle task",
             "frequency_only": "center source row x 3 frequencies",
         },
-        "fairness": "All three ablations use the same bounded observer floor computed once from the full blank-material Gate-6 address space.",
-        "decision_rule": "If position_only matches full while frequency_only does not, kill the joint position-frequency addressing interpretation for the current toy.",
+        "fairness": "All three ablations use the same bounded observer floor computed once from the full blank-material Gate-6 address space and the same slow material proposal schedule per seed.",
+        "preregistered_match_rule": "An ablation matches FULL only if it reaches the same median rank-1 fraction and at least 90% of FULL's median final worst-task ratio.",
+        "preregistered_outcomes": {
+            "both_match": "address coordinates are redundant here; joint position-frequency interpretation is not earned",
+            "position_only_matches": "position-dominated; kill joint position-frequency interpretation",
+            "frequency_only_matches": "frequency-dominated; kill joint position-frequency interpretation",
+            "neither_matches": "the joint space earns an ablation advantage in this protocol",
+        },
         "summary": summary,
         "interpretation_metrics": interpretation,
         "runs": {name: [x["result"] for x in rs] for name, rs in runs.items()},
-        "claim_boundary": "This is an ablation of the existing engineered address space. It does not test biological dendritic frequency coding or prove that position is generally more useful than frequency.",
+        "claim_boundary": "This is an ablation of the existing engineered address space. It does not test biological dendritic frequency coding or prove that one coordinate is generally more useful than another.",
     }
     (out_dir / "gate7_address_ablation.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     return receipt
