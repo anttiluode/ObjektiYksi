@@ -1,0 +1,41 @@
+{
+  "source": "GitHub Actions run 34464499224",
+  "python": ["3.11", "3.12"],
+  "gate0": {
+    "gradient_check_relative_error": 2.0073605300244948e-08,
+    "baseline_desired_over_decoy": 1.0,
+    "phase_reference": {
+      "desired_power": 0.8721474968660208,
+      "desired_power_over_baseline": 980.9430546300688,
+      "desired_over_decoy": 1366.4767119329483,
+      "material_mean": 0.9999999999999998,
+      "material_std": 0.5030164902794512,
+      "material_min": 0.1521115083482532,
+      "material_max": 3.8583403099666844
+    },
+    "controls": {
+      "magnitude_reference_desired_over_decoy": 74.41075024457705,
+      "magnitude_reference_desired_power_over_baseline": 0.8295898648140122,
+      "forward_only_desired_over_decoy": 0.9999999999999987,
+      "forward_only_desired_power_over_baseline": 0.007615901858115263,
+      "scrambled_reference_desired_over_decoy": 1.2377313842778548,
+      "scrambled_reference_desired_power_over_baseline": 0.15882105855020778,
+      "no_write_desired_over_decoy": 1.0
+    }
+  },
+  "gate1": {
+    "trained_omega": 1.55,
+    "desired_fraction_of_total": 0.1257439683208465,
+    "target_rank_on_right_port_strip": 1,
+    "target_over_strongest_other_right_port": 14.844882845455233,
+    "mirrored_desired_over_decoy": 0.0007318090321389098,
+    "mirror_product_ratio": 1.0000000000000113,
+    "desired_shortest_path_cost": 8.786405334110157,
+    "decoy_shortest_path_cost": 7.447713046082392,
+    "shortest_path_favors_desired": false,
+    "carved_peak_sampled_omega": 1.5750000000000002,
+    "carved_peak_desired_power": 0.8792638776701078,
+    "carved_half_power_sampled_bandwidth": 0.19999999999999996
+  },
+  "claim": "A signal-defined functional edge field can be hardened into a persistent fixed-budget material deformation that changes later receiver-selective wave transfer; the resulting object is not captured by static shortest-path conductance."
+}
