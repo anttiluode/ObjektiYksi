@@ -1,0 +1,26 @@
+{
+  "gate": 4,
+  "ci_run": 34466485537,
+  "training_omega": 1.55,
+  "seeds": 6,
+  "frequency_heldout": {
+    "samples_per_seed": 16,
+    "median_contiguous_rank1_width": 0.2875,
+    "min_contiguous_rank1_width": 0.25,
+    "median_rank1_fraction": 0.71875,
+    "median_target_over_strongest_other": 1.5839583725285977
+  },
+  "source_heldout": {
+    "samples_per_seed": 8,
+    "median_rank1_fraction": 0.3125,
+    "median_target_over_strongest_other": 0.6195265472295354
+  },
+  "joint_heldout": {
+    "samples_per_seed": 44,
+    "median_rank1_fraction": 0.4318181818181818,
+    "median_target_over_strongest_other": 0.8657759367532731,
+    "worst_seed_query_target_over_strongest_other": 0.03974447858714658
+  },
+  "interpretation": "The learned material has a substantial frequency basin at the trained source but weak nearby-source generalization. The persistent object is better described as a source-conditioned transfer relation than a destination-independent routing basin.",
+  "next_attack": "Train on multiple source landing points using one worst-case scalar consequence, then test unseen source positions."
+}
