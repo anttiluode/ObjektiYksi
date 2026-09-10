@@ -1,0 +1,48 @@
+{
+  "gate": 8,
+  "question": "Is the spatial address result programmable, or merely the blank lattice's native vertical geometry?",
+  "fixed_frequency": 1.35,
+  "crossed_map": "upper->lower, center->upper, lower->center",
+  "preregistered_success": {
+    "median_crossed_rank1_fraction": 1.0,
+    "median_crossed_min_ratio_at_least": 1.1,
+    "every_seed_crossed_min_ratio_above": 1.0,
+    "crossed_median_ratio_at_least_random_times": 1.1
+  },
+  "summary": {
+    "crossed": {
+      "median_baseline_min_ratio": 0.1097786869067633,
+      "median_baseline_rank1_fraction": 0.0,
+      "median_final_min_ratio": 1.5224952683924415,
+      "min_final_min_ratio": 1.3626324732822865,
+      "median_final_rank1_fraction": 1.0,
+      "median_acceptance_fraction": 0.31666666666666665,
+      "median_worst_relation_switches": 90.0,
+      "median_worst_competitor_switches": 95.0,
+      "max_material_sum_relative_error": 2.583791766400364e-16
+    },
+    "identity": {
+      "median_baseline_min_ratio": 1.1488290448761067,
+      "median_final_min_ratio": 1.7811582454019808,
+      "min_final_min_ratio": 1.7099137941887608,
+      "median_final_rank1_fraction": 1.0
+    },
+    "random_crossed": {
+      "median_final_min_ratio": 0.06725020763308555,
+      "median_final_rank1_fraction": 0.0
+    },
+    "no_write_crossed": {
+      "median_final_min_ratio": 0.1097786869067633,
+      "median_final_rank1_fraction": 0.0
+    }
+  },
+  "crossed_seed_final_min_ratios": [
+    1.5224952683924415,
+    1.7174784417452362,
+    1.3626324732822865
+  ],
+  "crossed_success": true,
+  "identity_success": true,
+  "verdict": "crossed_permutation_survives_native_geometry_attack",
+  "claim_boundary": "This establishes only non-native three-relation spatial remapping in the engineered resonant lattice under local conservative material exploration plus a global worst-case scalar consequence."
+}
