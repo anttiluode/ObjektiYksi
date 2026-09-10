@@ -29,8 +29,8 @@ def addresses() -> list[Address]:
 
 def task_port_indices(grid) -> list[int]:
     ports = right_ports(grid)
-    if len(ports) < 7:
-        raise ValueError("Gate 6 requires at least seven right-side ports")
+    if len(ports) < 5:
+        raise ValueError("Gate 6 requires at least five right-side ports")
     mid = len(ports) // 2
     return [mid - 2, mid, mid + 2]
 
@@ -252,8 +252,6 @@ def run_mode(
     if mode == "stale_selector_material":
         final_selected = frozen_choices.copy()
     elif mode == "random_address_material":
-        # Random is a material-learning control, so final performance is reported
-        # both at a fixed random draw and at an oracle address scan.
         final_selected = rng.integers(len(addr), size=len(tasks), dtype=int)
     else:
         final_selected = selector_choices(values)
