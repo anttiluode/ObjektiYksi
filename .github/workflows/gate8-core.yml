@@ -1,0 +1,32 @@
+name: gate8-core
+
+on:
+  pull_request:
+
+jobs:
+  gate8-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - run: |
+          python - <<'PY'
+          import json
+          from gate8_move_address_optimum import run_mode, summarize
+          runs = [run_mode('forced_consequence', seed=s) for s in range(3)]
+          print(json.dumps(summarize(runs), indent=2))
+          for x in runs:
+              r = x['result']
+              print(json.dumps({
+                  'seed': r['seed'],
+                  'final_forced_min_ratio': r['final_forced']['min_ratio'],
+                  'final_forced_rank1_fraction': r['final_forced']['rank1_fraction'],
+                  'final_forced_is_oracle_fraction': r['final_forced_is_oracle_fraction'],
+                  'final_oracle_choices': r['final_oracle_choices'],
+                  'oracle_address_switches': r['oracle_address_switches']
+              }, indent=2))
+          PY
