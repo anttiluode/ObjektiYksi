@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from gate2_local_dither import local_edge_pairs, make_schedule, transfer_local_material
-from gate10_dense_operator_readback import effective_matrix, matrix_ports
+from gate10_dense_operator_readback import effective_matrix, matrix_error, matrix_ports
 from gate11_two_address_operator_family import (
     OMEGAS,
     audit_family,
@@ -41,22 +41,19 @@ def complex_operator_jacobian(grid, g: np.ndarray, omega: float) -> np.ndarray:
         dM/dg_e = -(C H b_e)(b_e^T H B),
 
     because dK/dg_e=b_e b_e^T for an edge incidence vector b_e.
-    The dynamic operator is complex symmetric, so the two factors can be
-    obtained from input-port and output-port solves without finite differences.
     """
     inputs, outputs = matrix_ports(grid)
     n_nodes = grid.n * grid.n
     rhs_in = np.zeros((n_nodes, len(inputs)), dtype=complex)
     rhs_out = np.zeros((n_nodes, len(outputs)), dtype=complex)
-    for k, node in enumerate(inputs):
-        rhs_in[node, k] = 1.0
-    for k, node in enumerate(outputs):
-        rhs_out[node, k] = 1.0
+    for k, src in enumerate(inputs):
+        rhs_in[src, k] = 1.0
+    for k, dst in enumerate(outputs):
+        rhs_out[dst, k] = 1.0
 
     A = operator_matrix(grid, g, omega=omega)
     u = np.linalg.solve(A, rhs_in)   # H B
-    r = np.linalg.solve(A, rhs_out)  # H C^T
-
+    r = np.linalg.solve(A, rhs_out)  # H C^T; A is complex symmetric
     i = grid.edges[:, 0]
     j = grid.edges[:, 1]
     du = u[i, :] - u[j, :]
@@ -64,19 +61,16 @@ def complex_operator_jacobian(grid, g: np.ndarray, omega: float) -> np.ndarray:
 
     jac = np.empty((9, len(grid.edges)), dtype=complex)
     for e in range(len(grid.edges)):
-        dM = -np.outer(dr[e, :], du[e, :])
-        jac[:, e] = dM.reshape(-1)
+        jac[:, e] = (-np.outer(dr[e, :], du[e, :])).reshape(-1)
     return jac
 
 
 def real_normalized_residual_and_jacobian(grid, g, target, omega):
     current = effective_matrix(grid, g, omega=omega)
     scale = max(float(np.linalg.norm(target)), 1e-30)
-    residual_c = (current - target).reshape(-1) / scale
-    jac_c = complex_operator_jacobian(grid, g, omega) / scale
-    residual = np.concatenate([residual_c.real, residual_c.imag])
-    jac = np.vstack([jac_c.real, jac_c.imag])
-    return residual, jac
+    rc = (current - target).reshape(-1) / scale
+    jc = complex_operator_jacobian(grid, g, omega) / scale
+    return np.concatenate([rc.real, rc.imag]), np.vstack([jc.real, jc.imag])
 
 
 def tangent_projector(n_edges: int) -> np.ndarray:
@@ -93,16 +87,12 @@ def svd_rank(s: np.ndarray, shape) -> int:
 
 def cosine(a: np.ndarray, b: np.ndarray) -> float:
     den = float(np.linalg.norm(a) * np.linalg.norm(b))
-    if den <= 1e-30:
-        return 0.0
-    return float(np.dot(a, b) / den)
+    return 0.0 if den <= 1e-30 else float(np.dot(a, b) / den)
 
 
 def tangent_audit(grid, g, targets):
     P = tangent_projector(len(g))
-    residuals = []
-    jacobians = []
-    rows = []
+    residuals, jacobians, rows = [], [], []
 
     for slot, (target, omega) in enumerate(zip(targets, OMEGAS)):
         r, J = real_normalized_residual_and_jacobian(grid, g, target, omega)
@@ -110,30 +100,25 @@ def tangent_audit(grid, g, targets):
         s = np.linalg.svd(Jp, compute_uv=False)
         rank = svd_rank(s, Jp.shape)
         grad = P @ (J.T @ r)
-        # The sign is immaterial for cosine because both descent directions
-        # are -grad; retaining grad makes the derivative interpretation clear.
-        rows.append(
-            {
-                "slot": slot,
-                "omega": float(omega),
-                "residual_norm": float(np.linalg.norm(r)),
-                "tangent_rank": rank,
-                "largest_singular": float(s[0]) if len(s) else 0.0,
-                "smallest_nonzero_singular": float(s[rank - 1]) if rank else 0.0,
-                "gradient_norm": float(np.linalg.norm(grad)),
-            }
-        )
+        rows.append({
+            "slot": slot,
+            "omega": float(omega),
+            "residual_norm": float(np.linalg.norm(r)),
+            "tangent_rank": rank,
+            "largest_singular": float(s[0]) if len(s) else 0.0,
+            "smallest_nonzero_singular": float(s[rank - 1]) if rank else 0.0,
+            "gradient_norm": float(np.linalg.norm(grad)),
+        })
         residuals.append(r)
         jacobians.append(J)
 
     r_stack = np.concatenate(residuals)
     J_stack = np.vstack(jacobians)
-    J_stack_p = J_stack @ P
-    s_stack = np.linalg.svd(J_stack_p, compute_uv=False)
-    stack_rank = svd_rank(s_stack, J_stack_p.shape)
+    Jp_stack = J_stack @ P
+    s_stack = np.linalg.svd(Jp_stack, compute_uv=False)
+    rank_stack = svd_rank(s_stack, Jp_stack.shape)
 
-    # Best first-order correction allowed by the fixed-total-material tangent.
-    z, *_ = np.linalg.lstsq(J_stack_p, -r_stack, rcond=None)
+    z, *_ = np.linalg.lstsq(Jp_stack, -r_stack, rcond=None)
     d = P @ z
     linear_after = r_stack + J_stack @ d
     linear_ratio = float(np.linalg.norm(linear_after) / max(np.linalg.norm(r_stack), 1e-30))
@@ -141,32 +126,29 @@ def tangent_audit(grid, g, targets):
     grad0 = P @ (jacobians[0].T @ residuals[0])
     grad1 = P @ (jacobians[1].T @ residuals[1])
 
-    # What each address's own least-squares correction predicts for the other.
     individual = []
     for slot in (0, 1):
         Jp = jacobians[slot] @ P
         z_i, *_ = np.linalg.lstsq(Jp, -residuals[slot], rcond=None)
         d_i = P @ z_i
-        own_before = float(np.linalg.norm(residuals[slot]))
-        own_after = float(np.linalg.norm(residuals[slot] + jacobians[slot] @ d_i))
         other = 1 - slot
+        own_before = float(np.linalg.norm(residuals[slot]))
         other_before = float(np.linalg.norm(residuals[other]))
+        own_after = float(np.linalg.norm(residuals[slot] + jacobians[slot] @ d_i))
         other_after = float(np.linalg.norm(residuals[other] + jacobians[other] @ d_i))
-        individual.append(
-            {
-                "slot": slot,
-                "own_linear_residual_ratio": own_after / max(own_before, 1e-30),
-                "other_linear_residual_ratio": other_after / max(other_before, 1e-30),
-            }
-        )
+        individual.append({
+            "slot": slot,
+            "own_linear_residual_ratio": own_after / max(own_before, 1e-30),
+            "other_linear_residual_ratio": other_after / max(other_before, 1e-30),
+        })
 
     return {
         "per_address": rows,
         "stacked_real_output_dimension": int(len(r_stack)),
-        "stacked_tangent_rank": stack_rank,
+        "stacked_tangent_rank": rank_stack,
         "stacked_largest_singular": float(s_stack[0]) if len(s_stack) else 0.0,
-        "stacked_smallest_nonzero_singular": float(s_stack[stack_rank - 1]) if stack_rank else 0.0,
-        "stacked_condition_number_nonzero": float(s_stack[0] / s_stack[stack_rank - 1]) if stack_rank else float("inf"),
+        "stacked_smallest_nonzero_singular": float(s_stack[rank_stack - 1]) if rank_stack else 0.0,
+        "stacked_condition_number_nonzero": float(s_stack[0] / s_stack[rank_stack - 1]) if rank_stack else float("inf"),
         "gradient_cosine": cosine(grad0, grad1),
         "best_linearized_residual_ratio": linear_ratio,
         "individual_linear_corrections": individual,
@@ -175,10 +157,10 @@ def tangent_audit(grid, g, targets):
 
 
 def matrix_objective(grid, g, targets) -> float:
-    errs = np.asarray(
-        [matrix_error(effective_matrix(grid, g, omega=w), t) ** 2 for t, w in zip(targets, OMEGAS)],
-        dtype=float,
-    )
+    errs = np.asarray([
+        matrix_error(effective_matrix(grid, g, omega=w), t) ** 2
+        for t, w in zip(targets, OMEGAS)
+    ], dtype=float)
     return scalar_consequence(errs)
 
 
@@ -202,14 +184,12 @@ def gauss_newton_diagnostic(grid, g_start, targets, x_heldout, steps: int = GN_S
     for step in range(steps + 1):
         audit = audit_family(grid, g, targets, x_heldout)
         objective = matrix_objective(grid, g, targets)
-        trace.append(
-            {
-                "step": step,
-                "objective": objective,
-                "worst_matrix_error": audit["worst_matrix_error"],
-                "worst_heldout_error": audit["worst_heldout_error"],
-            }
-        )
+        trace.append({
+            "step": step,
+            "objective": objective,
+            "worst_matrix_error": audit["worst_matrix_error"],
+            "worst_heldout_error": audit["worst_heldout_error"],
+        })
         if step == steps:
             break
 
@@ -219,9 +199,6 @@ def gauss_newton_diagnostic(grid, g_start, targets, x_heldout, steps: int = GN_S
         if max_alpha <= 1e-12 or np.linalg.norm(d) <= 1e-30:
             break
 
-        # Backtracking over the exact nonlinear system. The direction comes
-        # from the full audit Jacobian, so this is explicitly an oracle
-        # diagnostic rather than a local biological/physical learner.
         base = objective
         best = None
         for k in range(11):
@@ -231,11 +208,10 @@ def gauss_newton_diagnostic(grid, g_start, targets, x_heldout, steps: int = GN_S
                 continue
             value = matrix_objective(grid, cand, targets)
             if value < base - 1e-14 and (best is None or value < best[0]):
-                best = (value, cand, alpha)
+                best = (value, cand)
         if best is None:
             break
         g = best[1]
-        # d is projected into the fixed-sum tangent. Correct only roundoff.
         g += (total0 - float(np.sum(g))) / len(g)
 
     final = audit_family(grid, g, targets, x_heldout)
@@ -248,54 +224,44 @@ def gauss_newton_diagnostic(grid, g_start, targets, x_heldout, steps: int = GN_S
 
 
 def continue_local_search(grid, g_start, targets, seed: int, extra_attempts: int = EXTRA_LOCAL_ATTEMPTS):
-    """Continue Gate-11's derivative-free local learner from its exact final g."""
+    """Continue Gate-11's original derivative-free local learner from its exact final g."""
     g = g_start.copy()
     total0 = float(np.sum(g))
-    condition = "conflicting_independent_teachers"
-    x_train, x_heldout = probe_sets(condition, seed)
+    x_train, x_heldout = probe_sets("conflicting_independent_teachers", seed)
     y_train = [target @ x for target, x in zip(targets, x_train)]
-    losses = np.asarray(
-        [
-            normalized_loss_at_address(grid, g, omega, x, y)
-            for omega, x, y in zip(OMEGAS, x_train, y_train)
-        ],
-        dtype=float,
-    )
+    losses = np.asarray([
+        normalized_loss_at_address(grid, g, omega, x, y)
+        for omega, x, y in zip(OMEGAS, x_train, y_train)
+    ], dtype=float)
     objective = scalar_consequence(losses)
 
     pairs = local_edge_pairs(grid)
     schedule = make_schedule(len(pairs), extra_attempts, 60000 + seed)
-    checkpoints = {0, 600, 1200, 2400, 3600, 4800, 7200, extra_attempts}
+    checkpoints = {600, 1200, 2400, 3600, 4800, 7200, extra_attempts}
     trace = []
 
     def record(k):
         a = audit_family(grid, g, targets, x_heldout)
-        trace.append(
-            {
-                "extra_attempts": int(k),
-                "training_objective": float(objective),
-                "worst_matrix_error": a["worst_matrix_error"],
-                "mean_matrix_error": a["mean_matrix_error"],
-                "worst_heldout_error": a["worst_heldout_error"],
-            }
-        )
+        trace.append({
+            "extra_attempts": int(k),
+            "training_objective": float(objective),
+            "worst_matrix_error": a["worst_matrix_error"],
+            "mean_matrix_error": a["mean_matrix_error"],
+            "worst_heldout_error": a["worst_heldout_error"],
+        })
 
     record(0)
-    accepted = 0
-    proposed = 0
+    accepted = proposed = 0
     for k in range(extra_attempts):
         ea, eb = map(int, pairs[int(schedule.pair_index[k])])
         cand = transfer_local_material(g, ea, eb, int(schedule.orientation[k]), delta=DELTA)
         if cand is None:
             continue
         proposed += 1
-        cand_losses = np.asarray(
-            [
-                normalized_loss_at_address(grid, cand, omega, x, y)
-                for omega, x, y in zip(OMEGAS, x_train, y_train)
-            ],
-            dtype=float,
-        )
+        cand_losses = np.asarray([
+            normalized_loss_at_address(grid, cand, omega, x, y)
+            for omega, x, y in zip(OMEGAS, x_train, y_train)
+        ], dtype=float)
         cand_obj = scalar_consequence(cand_losses)
         if cand_obj < objective - 1e-14:
             g = cand
@@ -305,9 +271,8 @@ def continue_local_search(grid, g_start, targets, seed: int, extra_attempts: int
         if (k + 1) in checkpoints:
             record(k + 1)
 
-    final = audit_family(grid, g, targets, x_heldout)
     return {
-        "final": final,
+        "final": audit_family(grid, g, targets, x_heldout),
         "trace": trace,
         "accepted": accepted,
         "proposed": proposed,
@@ -317,32 +282,26 @@ def continue_local_search(grid, g_start, targets, seed: int, extra_attempts: int
 
 
 def run_seed(seed: int, extra_local_attempts: int = EXTRA_LOCAL_ATTEMPTS):
-    # Recreate the exact Gate-11 conflicting consequence endpoint.
     base = train_joint(
         "conflicting_independent_teachers",
         "consequence",
         seed=seed,
         attempts=GATE11_ATTEMPTS,
     )
-    grid = base["grid"]
-    g = base["g"]
+    grid, g = base["grid"], base["g"]
     targets, _ = target_family(grid, "conflicting_independent_teachers")
     _, x_heldout = probe_sets("conflicting_independent_teachers", seed)
 
     tangent = tangent_audit(grid, g, targets)
-    # JSON cannot serialize the diagnostic direction; it is used above and
-    # deliberately omitted from the receipt.
     tangent.pop("joint_least_squares_direction", None)
-
-    oracle = gauss_newton_diagnostic(grid, g, targets, x_heldout)
-    local = continue_local_search(grid, g, targets, seed, extra_attempts=extra_local_attempts)
-
     return {
         "seed": seed,
         "gate11_endpoint": base["result"]["final"],
         "tangent": tangent,
-        "oracle_gauss_newton": oracle,
-        "continued_local": local,
+        "oracle_gauss_newton": gauss_newton_diagnostic(grid, g, targets, x_heldout),
+        "continued_local": continue_local_search(
+            grid, g, targets, seed, extra_attempts=extra_local_attempts
+        ),
     }
 
 
@@ -350,37 +309,37 @@ def summarize(runs):
     def arr(fn):
         return np.asarray([float(fn(r)) for r in runs], dtype=float)
 
-    stack_ranks = [int(r["tangent"]["stacked_tangent_rank"]) for r in runs]
-    gradient_cosines = arr(lambda r: r["tangent"]["gradient_cosine"])
-    linear_ratios = arr(lambda r: r["tangent"]["best_linearized_residual_ratio"])
-    gate11_err = arr(lambda r: r["gate11_endpoint"]["worst_matrix_error"])
-    local_err = arr(lambda r: r["continued_local"]["final"]["worst_matrix_error"])
-    local_hold = arr(lambda r: r["continued_local"]["final"]["worst_heldout_error"])
-    oracle_err = arr(lambda r: r["oracle_gauss_newton"]["final"]["worst_matrix_error"])
-    oracle_hold = arr(lambda r: r["oracle_gauss_newton"]["final"]["worst_heldout_error"])
+    ranks = [int(r["tangent"]["stacked_tangent_rank"]) for r in runs]
+    cosines = arr(lambda r: r["tangent"]["gradient_cosine"])
+    linear = arr(lambda r: r["tangent"]["best_linearized_residual_ratio"])
+    gate11 = arr(lambda r: r["gate11_endpoint"]["worst_matrix_error"])
+    local_m = arr(lambda r: r["continued_local"]["final"]["worst_matrix_error"])
+    local_h = arr(lambda r: r["continued_local"]["final"]["worst_heldout_error"])
+    oracle_m = arr(lambda r: r["oracle_gauss_newton"]["final"]["worst_matrix_error"])
+    oracle_h = arr(lambda r: r["oracle_gauss_newton"]["final"]["worst_heldout_error"])
 
     return {
         "seeds": [int(r["seed"]) for r in runs],
-        "stacked_tangent_ranks": stack_ranks,
-        "all_stacked_tangent_ranks_full_36": bool(all(v == FULL_STACK_REAL_RANK for v in stack_ranks)),
-        "median_gradient_cosine": float(np.median(gradient_cosines)),
-        "min_gradient_cosine": float(np.min(gradient_cosines)),
-        "max_gradient_cosine": float(np.max(gradient_cosines)),
-        "median_best_linearized_residual_ratio": float(np.median(linear_ratios)),
-        "max_best_linearized_residual_ratio": float(np.max(linear_ratios)),
-        "median_gate11_endpoint_worst_matrix_error": float(np.median(gate11_err)),
-        "median_continued_local_worst_matrix_error": float(np.median(local_err)),
-        "max_continued_local_worst_matrix_error": float(np.max(local_err)),
-        "median_continued_local_worst_heldout_error": float(np.median(local_hold)),
-        "median_oracle_worst_matrix_error": float(np.median(oracle_err)),
-        "max_oracle_worst_matrix_error": float(np.max(oracle_err)),
-        "median_oracle_worst_heldout_error": float(np.median(oracle_hold)),
+        "stacked_tangent_ranks": ranks,
+        "all_stacked_tangent_ranks_full_36": bool(all(v == FULL_STACK_REAL_RANK for v in ranks)),
+        "median_gradient_cosine": float(np.median(cosines)),
+        "min_gradient_cosine": float(np.min(cosines)),
+        "max_gradient_cosine": float(np.max(cosines)),
+        "median_best_linearized_residual_ratio": float(np.median(linear)),
+        "max_best_linearized_residual_ratio": float(np.max(linear)),
+        "median_gate11_endpoint_worst_matrix_error": float(np.median(gate11)),
+        "median_continued_local_worst_matrix_error": float(np.median(local_m)),
+        "max_continued_local_worst_matrix_error": float(np.max(local_m)),
+        "median_continued_local_worst_heldout_error": float(np.median(local_h)),
+        "median_oracle_worst_matrix_error": float(np.median(oracle_m)),
+        "max_oracle_worst_matrix_error": float(np.max(oracle_m)),
+        "median_oracle_worst_heldout_error": float(np.median(oracle_h)),
     }
 
 
 def run_all(out_dir: Path, seeds: int = 3, extra_local_attempts: int = EXTRA_LOCAL_ATTEMPTS):
     out_dir.mkdir(parents=True, exist_ok=True)
-    runs = [run_seed(seed=s, extra_local_attempts=extra_local_attempts) for s in range(seeds)]
+    runs = [run_seed(s, extra_local_attempts) for s in range(seeds)]
     summary = summarize(runs)
 
     full_rank = bool(summary["all_stacked_tangent_ranks_full_36"])
@@ -438,7 +397,7 @@ def main():
     p.add_argument("--seeds", type=int, default=3)
     p.add_argument("--extra-local-attempts", type=int, default=EXTRA_LOCAL_ATTEMPTS)
     args = p.parse_args()
-    receipt = run_all(Path(args.out), seeds=args.seeds, extra_local_attempts=args.extra_local_attempts)
+    receipt = run_all(Path(args.out), args.seeds, args.extra_local_attempts)
     print(json.dumps({"summary": receipt["summary"], "verdict": receipt["verdict"]}, indent=2))
 
 
