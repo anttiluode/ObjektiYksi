@@ -1,0 +1,57 @@
+{
+  "gate": 7,
+  "question": "Did Gate 6 actually need joint source-position and frequency addressing, or can one address dimension explain the result?",
+  "preregistered_match_fraction": 0.9,
+  "fairness": "Common observer floor from the full blank address space; same slow material proposal schedule per seed.",
+  "summary": {
+    "full": {
+      "address_count": 9,
+      "median_baseline_oracle_min_ratio": 1.1488290448761067,
+      "median_baseline_oracle_rank1_fraction": 1.0,
+      "median_final_selected_min_ratio": 1.7057700589296834,
+      "min_final_selected_min_ratio": 1.611690802250665,
+      "median_final_selected_rank1_fraction": 1.0,
+      "median_selector_oracle_exact_fraction": 1.0,
+      "median_distinct_final_selected_addresses": 3.0,
+      "median_oracle_address_switches": 0.0,
+      "median_acceptance_fraction": 0.19027777777777777,
+      "max_material_sum_relative_error": 0.0
+    },
+    "position_only": {
+      "address_count": 3,
+      "median_baseline_oracle_min_ratio": 1.1488290448761067,
+      "median_baseline_oracle_rank1_fraction": 1.0,
+      "median_final_selected_min_ratio": 1.7023612620774213,
+      "min_final_selected_min_ratio": 1.6230544874016906,
+      "median_final_selected_rank1_fraction": 1.0,
+      "median_selector_oracle_exact_fraction": 1.0,
+      "median_distinct_final_selected_addresses": 3.0,
+      "median_oracle_address_switches": 0.0,
+      "median_acceptance_fraction": 0.16666666666666666,
+      "max_material_sum_relative_error": 0.0
+    },
+    "frequency_only": {
+      "address_count": 3,
+      "median_baseline_oracle_min_ratio": 0.9723065176610186,
+      "median_baseline_oracle_rank1_fraction": 0.3333333333333333,
+      "median_final_selected_min_ratio": 0.9999960003012774,
+      "min_final_selected_min_ratio": 0.9999675379501015,
+      "median_final_selected_rank1_fraction": 0.6666666666666666,
+      "median_selector_oracle_exact_fraction": 1.0,
+      "median_distinct_final_selected_addresses": 2.0,
+      "median_oracle_address_switches": 0.0,
+      "median_acceptance_fraction": 0.009722222222222222,
+      "max_material_sum_relative_error": 0.0
+    }
+  },
+  "interpretation_metrics": {
+    "position_over_full_final_min_ratio": 0.9980016082270778,
+    "frequency_over_full_final_min_ratio": 0.5862431428352912,
+    "position_matches_full_rank1": true,
+    "frequency_matches_full_rank1": false,
+    "position_matches_full": true,
+    "frequency_matches_full": false,
+    "verdict": "position_dominated_joint_not_needed"
+  },
+  "reproduction": "GitHub Actions gate7-fast, Python 3.11 and 3.12, both success"
+}
