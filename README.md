@@ -8,6 +8,22 @@ This repo tests one concrete version of the idea that emerged from `ResonantNeur
 
 The first experiment is deliberately small and attackable. It is not a claim that cortex is an acoustic cavity, that dendrites literally contain water-wave dams, or that a returned signal automatically solves biological credit assignment.
 
+## What happened
+
+GitHub Actions reproduced Gates 0–1 on Python 3.11 and 3.12. Starting from an exactly mirror-symmetric material (`desired/decoy = 1`), the signed forward × receiver-reference rule redistributes a **fixed mean coupling budget**. After fast state is erased, the identical source-only query gives:
+
+```text
+desired power / baseline       980.94x
+desired / mirror decoy        1366.48x
+target / strongest other port   14.84x
+```
+
+Mirroring only the learned material swaps the preference exactly (`ratio × mirrored ratio = 1.000000000000011`). Yet a static `1/g` shortest-path calculation actually finds the decoy path cheaper than the desired path. So the learned object is **not a simple conductive road**; its function lives in the frequency-dependent wave operator.
+
+The controls also catch the silence trap. Magnitude-only reference reaches `74.41x` target/decoy while making the target itself slightly weaker; forward-only nearly silences both ports and remains symmetric. The signed phase-sensitive rule is the one that simultaneously increases absolute target transfer and specificity.
+
+See [`GATE0_1_RESULTS.md`](GATE0_1_RESULTS.md) and the compact frozen [`results/gate0_1_summary.json`](results/gate0_1_summary.json).
+
 ## Gate 0 — a wave field carves channels and dams
 
 We use a damped frequency-domain wave network on a 2-D lattice. Each lattice edge has a positive coupling / permeability `g_e`. For one angular frequency,
@@ -104,6 +120,12 @@ The point is not that the positive control must be biologically plausible. The p
 
 If that fails, there is no reason to argue about biological implementations.
 
+## Gate 1 — road or resonant topology?
+
+`gate1_route_or_resonance.py` attacks the obvious interpretation that the material merely carved a high-conductance road. It mirrors the learned material, sweeps frequency, ranks all right-side ports, and compares the wave result with ordinary `1/g` shortest paths.
+
+The mirror test says the persistent material really contains the receiver preference. The shortest-path test says **ordinary graph distance does not explain it**. The frequency sweep says the result is a transfer property of the resonant operator.
+
 ## What counts as a dam
 
 A nodal line is not automatically a wall. This repo therefore uses `dam` operationally: an edge whose persistent coupling has been driven substantially below the material mean. Likewise a `channel` is an edge driven above the mean. The code measures both rather than calling every low-amplitude wave line a topological barrier.
@@ -112,25 +134,27 @@ A nodal line is not automatically a wall. This repo therefore uses `dam` operati
 
 ```bash
 python -m pip install -r requirements.txt
-python self_carving.py --out results
 pytest -q
+python self_carving.py --out results
+python gate1_route_or_resonance.py --out results
 ```
 
-The experiment writes:
+The experiments write:
 
 ```text
 results/gate0.json
 results/gate0_topology.svg
+results/gate1_route_or_resonance.json
 ```
 
 The SVG is generated directly by the experiment, with no plotting dependency.
 
 ## Claim boundary
 
-A positive Gate 0 would establish only this computational-physics statement:
+Gates 0–1 establish only this computational-physics statement in the toy:
 
-> **In this reciprocal wave-network toy, a forward/reference interaction can be converted into a slow, resource-constrained material deformation which persists after fast state is erased and changes a later source-only transfer.**
+> **A reciprocal wave interaction can define a spatial write field which is converted into a slow, resource-constrained material deformation; after fast state is erased, that persistent deformation changes a later receiver-selective wave transfer, and the result is not reducible to a static shortest conductive path.**
 
-It would **not** establish that real dendrites implement this rule, that wave nodes literally become anatomical walls, that the reference signal is a biological adjoint, or that the rule solves free structural credit assignment. Those remain separate questions.
+They do **not** establish that real dendrites implement this rule, that wave nodes literally become anatomical walls, that the reference signal is a biological adjoint, or that the rule solves free structural credit assignment.
 
-The next gate, if Gate 0 survives controls, is to remove the analytically signed positive-control rule and ask whether a strictly local stateful medium can discover an equivalent carving direction by physical dither + delayed consequence.
+The next gate removes the analytically signed positive-control rule and asks whether a strictly local stateful medium can discover an equivalent carving direction by physical dither + delayed consequence.
