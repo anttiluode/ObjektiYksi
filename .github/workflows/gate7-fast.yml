@@ -1,0 +1,26 @@
+name: gate7-fast
+
+on:
+  pull_request:
+
+jobs:
+  gate7:
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest -q test_gate7_address_ablation.py
+      - run: python gate7_address_ablation.py --out results --seeds 3 --epochs 30 --slow-proposals 24
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gate7-fast-py${{ matrix.python-version }}
+          path: |
+            results/gate7_address_ablation.json
+            results/gate7_position_only_topology.svg
