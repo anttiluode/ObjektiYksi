@@ -1,0 +1,44 @@
+{
+  "gate": 3,
+  "ci_run": 34466008885,
+  "seeds": 6,
+  "attempts_per_seed": 650,
+  "baseline": {
+    "target_rank": 6,
+    "target_over_strongest_other": 0.7376980227202524
+  },
+  "true_multiport": {
+    "median_target_over_strongest_other": 2.052230950611336,
+    "min_target_over_strongest_other": 1.6777269493828333,
+    "max_target_over_strongest_other": 2.1930895995724304,
+    "all_target_rank_one": true,
+    "median_target_power_vs_baseline": 2.809028584324376,
+    "median_utility_gain": 1.0161109535104664,
+    "median_acceptance_fraction": 0.23923076923076925,
+    "median_competitor_switches": 59.0,
+    "max_material_sum_relative_error": 1.291895883200182e-16
+  },
+  "two_port_control": {
+    "median_target_over_strongest_other": 1.2273983878026362,
+    "min_target_over_strongest_other": 0.901609663582847,
+    "max_target_over_strongest_other": 1.4937626458795357,
+    "all_target_rank_one": false,
+    "median_target_power_vs_baseline": 3.323059484886048
+  },
+  "random_accept": {
+    "median_target_over_strongest_other": 0.5873271815560457,
+    "median_target_power_vs_baseline": 0.8079891112293917,
+    "median_target_rank": 6.0
+  },
+  "inverted_multiport": {
+    "median_target_over_strongest_other": 1.0362336673796226e-05,
+    "median_target_power_vs_baseline": 2.7990649653230477e-05,
+    "median_target_rank": 9.0
+  },
+  "no_write": {
+    "target_over_strongest_other": 0.7376980227202524,
+    "target_power_vs_baseline": 1.0,
+    "target_rank": 6.0
+  },
+  "guardrail": "The target is externally specified and training/testing still share one source and carrier. Gate 4 freezes material and measures an off-training routing basin."
+}
