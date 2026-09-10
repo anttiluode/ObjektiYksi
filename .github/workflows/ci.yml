@@ -34,9 +34,10 @@ jobs:
       - run: python gate9_address_optimum_moves.py --out results --seeds 3 --attempts 1200
       - run: python gate10_dense_operator_readback.py --out results --seeds 3 --attempts 1600
       - run: python gate11_two_address_operator_family.py --out results --seeds 3 --joint-attempts 2400 --isolated-attempts 1800
+      - run: python gate12_collision_or_optimization.py --out results --seeds 3 --extra-local-attempts 7200
       - uses: actions/upload-artifact@v4
         with:
-          name: gate0-11-results-py${{ matrix.python-version }}
+          name: gate0-12-results-py${{ matrix.python-version }}
           path: |
             results/gate0.json
             results/gate0_topology.svg
@@ -62,3 +63,4 @@ jobs:
             results/gate9_address_optimum_moves.json
             results/gate10_dense_operator_readback.json
             results/gate11_two_address_operator_family.json
+            results/gate12_collision_or_optimization.json

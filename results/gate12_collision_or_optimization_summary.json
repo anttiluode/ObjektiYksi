@@ -1,0 +1,37 @@
+{
+  "gate": 12,
+  "question": "Was Gate 11's independent-operator penalty a derivative-free optimization limit or a local geometric collision in the shared physical operator manifold?",
+  "verdict": "gate11_near_miss_was_budget_limited_local_search_rescues",
+  "thresholds": {
+    "matrix_error_rescue_at_most": 0.1,
+    "heldout_error_rescue_at_most": 0.1,
+    "full_stacked_real_rank": 36,
+    "best_linearized_residual_ratio_at_most_for_local_room": 0.1
+  },
+  "summary": {
+    "seeds": [0, 1, 2],
+    "stacked_tangent_ranks": [36, 36, 36],
+    "median_gradient_cosine": -0.07936700666262005,
+    "min_gradient_cosine": -0.1052240875730976,
+    "max_gradient_cosine": 0.07607386499507139,
+    "median_best_linearized_residual_ratio": 3.69652587876251e-15,
+    "max_best_linearized_residual_ratio": 4.057000052262983e-15,
+    "median_gate11_endpoint_worst_matrix_error": 0.11231050364564556,
+    "median_continued_local_worst_matrix_error": 0.05283059194657108,
+    "max_continued_local_worst_matrix_error": 0.06946561563670309,
+    "median_continued_local_worst_heldout_error": 0.050761799598631294,
+    "median_oracle_worst_matrix_error": 4.039067558680583e-08,
+    "max_oracle_worst_matrix_error": 5.1114758269140736e-08,
+    "median_oracle_worst_heldout_error": 3.9889538765630533e-08
+  },
+  "per_seed_continued_local_worst_matrix_error": {
+    "0": 0.05283059194657108,
+    "1": 0.06946561563670309,
+    "2": 0.04546390987890832
+  },
+  "full_rank": true,
+  "linear_room": true,
+  "local_rescue": true,
+  "oracle_rescue": true,
+  "claim_boundary": "The Gate-11 near miss is not a demonstrated hard capacity wall. This tested two-address pair has an essentially exact shared solution and the original derivative-free learner crosses the original 10% criterion with more search. This does not establish arbitrary pair compatibility, scalable multi-operator storage, or a hardware advantage."
+}
