@@ -33,9 +33,10 @@ jobs:
       - run: python gate8_crossed_spatial_map.py --out results --seeds 3 --attempts 1200
       - run: python gate9_address_optimum_moves.py --out results --seeds 3 --attempts 1200
       - run: python gate10_dense_operator_readback.py --out results --seeds 3 --attempts 1600
+      - run: python gate11_two_address_operator_family.py --out results --seeds 3 --joint-attempts 2400 --isolated-attempts 1800
       - uses: actions/upload-artifact@v4
         with:
-          name: gate0-10-results-py${{ matrix.python-version }}
+          name: gate0-11-results-py${{ matrix.python-version }}
           path: |
             results/gate0.json
             results/gate0_topology.svg
@@ -60,3 +61,4 @@ jobs:
             results/gate8_crossed_topology.svg
             results/gate9_address_optimum_moves.json
             results/gate10_dense_operator_readback.json
+            results/gate11_two_address_operator_family.json
