@@ -35,6 +35,16 @@ def address_spaces() -> dict[str, list[Address]]:
     }
 
 
+def common_sigma2(grid, tasks: list[int], floor_fraction: float) -> float:
+    """Use one observer floor for every ablation.
+
+    The floor is defined from the original full Gate-6 address space on blank
+    material, so removing an address dimension cannot silently change the
+    bounded objective itself.
+    """
+    return baseline_floor(grid, tasks, address_spaces()["full"], floor_fraction)
+
+
 def learned_choices(values: np.ndarray, counts: np.ndarray) -> np.ndarray:
     out: list[int] = []
     for q in range(values.shape[0]):
@@ -67,7 +77,7 @@ def run_space(
     tasks = task_port_indices(grid)
     g = np.ones(len(grid.edges), dtype=float)
     total0 = float(np.sum(g))
-    sigma2 = baseline_floor(grid, tasks, addr, floor_fraction)
+    sigma2 = common_sigma2(grid, tasks, floor_fraction)
 
     # Audit-only baseline. These exact utilities never initialize the selector.
     baseline_matrix = exact_matrix(grid, g, tasks, addr, sigma2)
@@ -167,6 +177,7 @@ def run_space(
         "slow_proposals_per_epoch": slow_proposals,
         "address_count": len(addr),
         "addresses": [a.__dict__ for a in addr],
+        "sigma2_common_full_space": sigma2,
         "baseline_oracle_choices": choice_records(addr, baseline_oracle),
         "final_selected_choices": choice_records(addr, final_selected),
         "final_oracle_choices": choice_records(addr, final_oracle),
@@ -197,6 +208,7 @@ def summarize(runs):
     return {
         "seeds": [int(r["seed"]) for r in rows],
         "address_count": int(rows[0]["address_count"]),
+        "sigma2_common_full_space": float(rows[0]["sigma2_common_full_space"]),
         "median_baseline_oracle_min_ratio": float(np.median(vals("baseline_oracle", "min_ratio"))),
         "median_baseline_oracle_rank1_fraction": float(np.median(vals("baseline_oracle", "rank1_fraction"))),
         "median_final_selected_min_ratio": float(np.median(vals("final_selected", "min_ratio"))),
@@ -247,6 +259,7 @@ def run_all(out_dir: Path, seeds: int = 3, epochs: int = 30, slow_proposals: int
             "position_only": "3 source rows at fixed omega=1.35, the frequency selected by every Gate-6 blank/final oracle task",
             "frequency_only": "center source row x 3 frequencies",
         },
+        "fairness": "All three ablations use the same bounded observer floor computed once from the full blank-material Gate-6 address space.",
         "decision_rule": "If position_only matches full while frequency_only does not, kill the joint position-frequency addressing interpretation for the current toy.",
         "summary": summary,
         "interpretation_metrics": interpretation,
