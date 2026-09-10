@@ -25,6 +25,7 @@ jobs:
       - run: python gate3_multiport_dither.py --out results --seeds 6
       - run: python gate4_routing_basin.py --out results --seeds 6
       - run: python gate5_multisource_basin.py --out results --seeds 4
+      - run: python gate5_long_confirm.py --out results --seeds 3 --attempts 1600
       - uses: actions/upload-artifact@v4
         with:
           name: gate0-5-results-py${{ matrix.python-version }}
@@ -39,3 +40,4 @@ jobs:
             results/gate4_routing_basin.json
             results/gate5_multisource_basin.json
             results/gate5_multisource_topology.svg
+            results/gate5_long_confirm.json
