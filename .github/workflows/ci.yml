@@ -29,9 +29,10 @@ jobs:
       - run: python gate6_learned_addressing.py --out results --seeds 3 --epochs 20 --slow-proposals 24
       - run: python gate6_moving_target.py --out results --seeds 3 --epochs 45 --slow-proposals 36
       - run: python gate6_online_selector.py --out results --seeds 3 --epochs 30 --slow-proposals 24
+      - run: python gate7_address_ablation.py --out results --seeds 3 --epochs 30 --slow-proposals 24
       - uses: actions/upload-artifact@v4
         with:
-          name: gate0-6-results-py${{ matrix.python-version }}
+          name: gate0-7-results-py${{ matrix.python-version }}
           path: |
             results/gate0.json
             results/gate0_topology.svg
@@ -50,3 +51,5 @@ jobs:
             results/gate6_moving_target_topology.svg
             results/gate6_online_selector.json
             results/gate6_online_selector_topology.svg
+            results/gate7_address_ablation.json
+            results/gate7_position_only_topology.svg
